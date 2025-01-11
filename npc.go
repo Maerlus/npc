@@ -30,26 +30,25 @@ func Create(s Settings, tx *world.Tx, f HandlerFunc) *player.Player {
 	npc := opts.New(player.Type,
 		player.Config{
 			Name: s.Name,
+			Skin: s.Skin,
+			Position: s.Position,
 		},
 	)
 
-	tx.AddEntity(npc)
+	pl := tx.AddEntity(npc).(*player.Player)
 	l := world.NewLoader(1, tx.World(), world.NopViewer{})
 	h := &handler{f: f, l: l, vulnerable: s.Vulnerable}
 
-	npc.ExecWorld(func(tx *world.Tx, e world.Entity) {
-		pl := e.(*player.Player)
-		pl.Move(mgl64.Vec3{}, s.Yaw, s.Pitch)
-		pl.SetScale(s.Scale)
-		pl.SetHeldItems(s.MainHand, s.OffHand)
-		pl.Armour().Set(s.Helmet, s.Chestplate, s.Leggings, s.Boots)
+	pl.Move(mgl64.Vec3{}, s.Yaw, s.Pitch)
+	pl.SetScale(s.Scale)
+	pl.SetHeldItems(s.MainHand, s.OffHand)
+	pl.Armour().Set(s.Helmet, s.Chestplate, s.Leggings, s.Boots)
 
-		if s.Immobile {
-			pl.SetImmobile()
-		}
+	if s.Immobile {
+		pl.SetImmobile()
+	}
 
-		pl.Handle(h)
-	})
+	pl.Handle(h)
 
 	h.syncPosition(tx, s.Position)
 	go syncWorld(npc, l)
